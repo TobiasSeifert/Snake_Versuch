@@ -20,13 +20,13 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 
 import objekte.Apfel;
+import objekte.Schlange;
 
 @SuppressWarnings("serial")
 public class Spiel extends JPanel implements ActionListener {
-	private int test = 0;
-	private int test2 = 20;
-	private int test3 = 1;
-	private int länge_Schlange;
+	private int level_Counter = 0;
+	private int level_Teiler = 15;
+	private int level_Teiler_Counter = 1;
 
 	private KeyListener pfeiltasten = new ButListener();
 
@@ -36,14 +36,9 @@ public class Spiel extends JPanel implements ActionListener {
 	//Am Anfang negativ, damit nicht gezeichnet
 	private Apfel apfel = new Apfel(-1,-1);
 	
-	// arrays für Schlange
-	private int[] schlange_x_Koordinate = new int[500];
-	private int[] schlange_y_Koordinate = new int[500];
+	private Schlange schlange;
 
 	private boolean alive;
-
-	// 0 = up, 1 = down, 2 = right, 3 = left
-	private static int direction;
 
 	private static int score;
 
@@ -62,19 +57,15 @@ public class Spiel extends JPanel implements ActionListener {
 	}
 
 	public void snake_move() {
-		directionChecken();
+		schlange.bestimmeSchlange();
 		apfelChecken();
 		gameOverChecken();
 		levelChecken();
 	}
 
 	public void neuesSpiel() {
-		länge_Schlange = 2;
-		direction = 2;
+		schlange = new Schlange(2,2); // 2 = Körper 2 lang, 2 = Richtung nach links
 		score = 0;
-
-		erschaffeSchlange();
-
 		erschaffeApfel();
 	}
 
@@ -86,52 +77,44 @@ public class Spiel extends JPanel implements ActionListener {
 	}
 
 	public void apfelChecken() {
-		if (schlange_x_Koordinate[0] == apfel.getX_Koordinate() && schlange_y_Koordinate[0] == apfel.getY_Koordinate()) {
+		if (schlange.getX_Koordinate(0) == apfel.getX_Koordinate() && schlange.getY_Koordinate(0) == apfel.getY_Koordinate()) {
 			esseApfel();
 			erschaffeApfel();
 		}
-
 	}
-
+	
 	public void erschaffeApfel() {
 		Random random = new Random();
-		apfel.setX_Koordinate(random.nextInt(19) * 20);
-		apfel.setY_Koordinate(random.nextInt(19) * 20);
-		for (int i = 0; i <= länge_Schlange; i++) {
-			while (apfel.getX_Koordinate() == schlange_x_Koordinate[i] && apfel.getY_Koordinate() == schlange_y_Koordinate[i]) {
-				apfel.setX_Koordinate(random.nextInt(19) * 20);
-				apfel.setY_Koordinate(random.nextInt(19) * 20);
+		outer: while (true) {
+			apfel = new Apfel((random.nextInt(19) * 20), (random.nextInt(19) * 20));
+			for (int i = 0; i <= schlange.getLänge_Körper(); i++) {
+				if(apfel.getX_Koordinate() == schlange.getX_Koordinate(i)
+						&& apfel.getY_Koordinate() == schlange.getY_Koordinate(i)) {
+					continue outer;
+				}
 			}
+			break;
 		}
 		repaint();
-	}
-
-	public void erschaffeSchlange() {
-		schlange_x_Koordinate[0] = 160;
-		schlange_y_Koordinate[0] = 140;
-
-		schlange_x_Koordinate[1] = 140;
-		schlange_y_Koordinate[1] = 140;
-
-		schlange_x_Koordinate[2] = 120;
-		schlange_y_Koordinate[2] = 140;
 	}
 
 	public void gameOverChecken() {
 		JLabel label = new JLabel("Dein Score beträgt " + score + "!");
 		label.setFont(new Font("Times New Roman", Font.ITALIC + Font.BOLD, 16));
-		if (schlange_x_Koordinate[0] < 0 || schlange_x_Koordinate[0] > 380 || schlange_y_Koordinate[0] < 0
-				|| schlange_y_Koordinate[0] > 380) {
+		if (schlange.getX_Koordinate(0) < 0 || schlange.getX_Koordinate(0) > 380 || schlange.getY_Koordinate(0) < 0
+				|| schlange.getY_Koordinate(0) > 380) {
 			alive = false;
+			System.out.println("Wand");
 			JOptionPane.showMessageDialog(Spiel.this, label, "Game Over", JOptionPane.INFORMATION_MESSAGE);
 			neuesSpiel();
 
 		}
 
-		for (int i = 1; i <= länge_Schlange; i++) {
-			if ((schlange_x_Koordinate[0] == schlange_x_Koordinate[i])
-					&& (schlange_y_Koordinate[0] == schlange_y_Koordinate[i])) {
+		for (int i = 1; i <= schlange.getLänge_Körper(); i++) {
+			if ((schlange.getX_Koordinate(0) == schlange.getX_Koordinate(i))
+					&& (schlange.getY_Koordinate(0) == schlange.getY_Koordinate(i))) {
 				alive = false;
+				System.out.println("schlange");
 				JOptionPane.showMessageDialog(Spiel.this, label, "Game Over", JOptionPane.INFORMATION_MESSAGE);
 				neuesSpiel();
 			}
@@ -139,52 +122,17 @@ public class Spiel extends JPanel implements ActionListener {
 	}
 	
 	public void levelChecken() {
-		if (test++ % test2 == 0) {
-			länge_Schlange++;
-			schlange_x_Koordinate[länge_Schlange] = schlange_x_Koordinate[länge_Schlange - 1];
-			schlange_y_Koordinate[länge_Schlange] = schlange_y_Koordinate[länge_Schlange - 1];
-			if (test3++ % 10 == 0) {
-				test2--;
+		if (level_Counter++ % level_Teiler == 0) {
+			schlange.verlängerSchlange();
+			if (level_Teiler_Counter++ % 10 == 0) {
+				level_Teiler--;
 			}
 		}
 	}
 	
 	public void esseApfel() {
-		länge_Schlange++;
-		schlange_x_Koordinate[länge_Schlange] = schlange_x_Koordinate[länge_Schlange - 1];
-		schlange_y_Koordinate[länge_Schlange] = schlange_y_Koordinate[länge_Schlange - 1];
+		schlange.verlängerSchlange();
 		score += 100;
-	}
-
-	public void directionChecken() {
-		if (direction == 0) {
-			for (int i = länge_Schlange; i >= 1; i--) {
-				schlange_y_Koordinate[i] = schlange_y_Koordinate[i - 1];
-				schlange_x_Koordinate[i] = schlange_x_Koordinate[i - 1];
-			}
-			schlange_y_Koordinate[0] = schlange_y_Koordinate[0] - 20;
-		}
-		if (direction == 1) {
-			for (int i = länge_Schlange; i >= 1; i--) {
-				schlange_y_Koordinate[i] = schlange_y_Koordinate[i - 1];
-				schlange_x_Koordinate[i] = schlange_x_Koordinate[i - 1];
-			}
-			schlange_y_Koordinate[0] = schlange_y_Koordinate[0] + 20;
-		}
-		if (direction == 2) {
-			for (int i = länge_Schlange; i >= 1; i--) {
-				schlange_y_Koordinate[i] = schlange_y_Koordinate[i - 1];
-				schlange_x_Koordinate[i] = schlange_x_Koordinate[i - 1];
-			}
-			schlange_x_Koordinate[0] = schlange_x_Koordinate[0] + 20;
-		}
-		if (direction == 3) {
-			for (int i = länge_Schlange; i >= 1; i--) {
-				schlange_y_Koordinate[i] = schlange_y_Koordinate[i - 1];
-				schlange_x_Koordinate[i] = schlange_x_Koordinate[i - 1];
-			}
-			schlange_x_Koordinate[0] = schlange_x_Koordinate[0] - 20;
-		}
 	}
 
 	public void addImages() {
@@ -227,14 +175,14 @@ public class Spiel extends JPanel implements ActionListener {
 					&& (e.getKeyCode() != KeyEvent.VK_ENTER)) {
 				System.out.println("Falsche Eingabe!");
 				addKeyListener(pfeiltasten);
-			} else if ((e.getKeyCode() == KeyEvent.VK_UP) && (direction != 1)) {
-				direction = 0;
-			} else if ((e.getKeyCode() == KeyEvent.VK_DOWN) && (direction != 0)) {
-				direction = 1;
-			} else if ((e.getKeyCode() == KeyEvent.VK_LEFT) && (direction != 2)) {
-				direction = 3;
-			} else if ((e.getKeyCode() == KeyEvent.VK_RIGHT) && (direction != 3)) {
-				direction = 2;
+			} else if ((e.getKeyCode() == KeyEvent.VK_UP) && (schlange.getRichtung() != 1)) {
+				schlange.setRichtung(0);
+			} else if ((e.getKeyCode() == KeyEvent.VK_DOWN) && (schlange.getRichtung() != 0)) {
+				schlange.setRichtung(1);
+			} else if ((e.getKeyCode() == KeyEvent.VK_LEFT) && (schlange.getRichtung() != 2)) {
+				schlange.setRichtung(3);
+			} else if ((e.getKeyCode() == KeyEvent.VK_RIGHT) && (schlange.getRichtung() != 3)) {
+				schlange.setRichtung(2);
 			}
 		}
 
@@ -268,23 +216,23 @@ public class Spiel extends JPanel implements ActionListener {
 			Graphics2D g2 = (Graphics2D) g;
 			g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-			switch (direction) {
+			switch (schlange.getRichtung()) {
 			case 0:
-				g.drawImage(head_0, schlange_x_Koordinate[0], schlange_y_Koordinate[0], this);
+				g.drawImage(head_0, schlange.getX_Koordinate(0), schlange.getY_Koordinate(0), this);
 				break;
 			case 1:
-				g.drawImage(head_1, schlange_x_Koordinate[0], schlange_y_Koordinate[0], this);
+				g.drawImage(head_1, schlange.getX_Koordinate(0), schlange.getY_Koordinate(0), this);
 				break;
 			case 2:
-				g.drawImage(head_2, schlange_x_Koordinate[0], schlange_y_Koordinate[0], this);
+				g.drawImage(head_2, schlange.getX_Koordinate(0), schlange.getY_Koordinate(0), this);
 				break;
 			case 3:
-				g.drawImage(head_3, schlange_x_Koordinate[0], schlange_y_Koordinate[0], this);
+				g.drawImage(head_3, schlange.getX_Koordinate(0), schlange.getY_Koordinate(0), this);
 			}
 
-			for (int i = 1; i <= länge_Schlange; i++) {
+			for (int i = 1; i <= schlange.getLänge_Körper(); i++) {
 				g.setColor(Color.BLUE);
-				g.fillOval(schlange_x_Koordinate[i], schlange_y_Koordinate[i], 20, 20);
+				g.fillOval(schlange.getX_Koordinate(i), schlange.getY_Koordinate(i), 20, 20);
 			}
 
 			g.drawImage(apple, apfel.getX_Koordinate(), apfel.getY_Koordinate(), this);
@@ -297,7 +245,7 @@ public class Spiel extends JPanel implements ActionListener {
 			String S_Score = "Score: " + score;
 			g.drawString(S_Score, 300, 15);
 
-			String S_Länge = "Länge: " + (länge_Schlange + 1);
+			String S_Länge = "Länge: " + (schlange.getLänge_Körper() + 1);
 			g.drawString(S_Länge, 170, 15);
 
 			if (minutes < 10) {
