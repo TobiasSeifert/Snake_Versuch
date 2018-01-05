@@ -20,6 +20,8 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 
 import objekte.Apfel;
+import objekte.Items;
+import objekte.Mauer;
 import objekte.Schlange;
 
 @SuppressWarnings("serial")
@@ -32,9 +34,11 @@ public class Spiel extends JPanel implements ActionListener {
 
 	private BufferedImage head_0, head_1, head_2, head_3;
 	private BufferedImage apple;
+	private BufferedImage wall;
 	
 	//Am Anfang negativ, damit nicht gezeichnet
 	private Apfel apfel = new Apfel(-1,-1);
+	private Mauer mauer = new Mauer(-1,-1);
 	
 	private Schlange schlange;
 
@@ -67,6 +71,7 @@ public class Spiel extends JPanel implements ActionListener {
 		schlange = new Schlange(2,2); // 2 = Körper 2 lang, 2 = Richtung nach links
 		score = 0;
 		erschaffeApfel();
+		erschaffeMauer();
 	}
 
 	public void starten() {
@@ -80,22 +85,49 @@ public class Spiel extends JPanel implements ActionListener {
 		if (schlange.getX_Koordinate(0) == apfel.getX_Koordinate() && schlange.getY_Koordinate(0) == apfel.getY_Koordinate()) {
 			esseApfel();
 			erschaffeApfel();
+			erschaffeMauer();
 		}
 	}
 	
 	public void erschaffeApfel() {
 		Random random = new Random();
-		outer: while (true) {
+		boolean check = true;
+		while (check) {
 			apfel = new Apfel((random.nextInt(19) * 20), (random.nextInt(19) * 20));
-			for (int i = 0; i <= schlange.getLänge_Körper(); i++) {
-				if(apfel.getX_Koordinate() == schlange.getX_Koordinate(i)
-						&& apfel.getY_Koordinate() == schlange.getY_Koordinate(i)) {
-					continue outer;
-				}
-			}
-			break;
+			check = checkItemSpawn(apfel);
 		}
-		repaint();
+	}
+	
+	public void erschaffeMauer() {
+		Random random = new Random();
+		boolean check = true;
+		while (check) {
+			mauer = new Mauer((random.nextInt(19) * 20), (random.nextInt(19) * 20));
+			check = checkItemSpawn(mauer);
+			if(!check) {
+				if(apfel.getX_Koordinate() == mauer.getX_Koordinate() && apfel.getY_Koordinate() == mauer.getY_Koordinate()) {
+					check = true;
+					continue;
+				}
+				if((mauer.getX_Koordinate() == schlange.getX_Koordinate(0) + 20 && mauer.getY_Koordinate() == schlange.getY_Koordinate(0) + 20 )||
+				   (mauer.getX_Koordinate() == schlange.getX_Koordinate(0) + 20 && mauer.getY_Koordinate() == schlange.getY_Koordinate(0) + 20 )||
+				   (mauer.getX_Koordinate() == schlange.getX_Koordinate(0) + 20 && mauer.getY_Koordinate() == schlange.getY_Koordinate(0) + 20 )||
+				   (mauer.getX_Koordinate() == schlange.getX_Koordinate(0) + 20 && mauer.getY_Koordinate() == schlange.getY_Koordinate(0) + 20)){
+					   check = true;
+					   continue;
+				   }
+			}
+		}
+	}
+	
+	public boolean checkItemSpawn(Items item) {
+		for (int i = 0; i <= schlange.getLänge_Körper(); i++) {
+			if(item.getX_Koordinate() == schlange.getX_Koordinate(i)
+					&& item.getY_Koordinate() == schlange.getY_Koordinate(i)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public void gameOverChecken() {
@@ -119,7 +151,16 @@ public class Spiel extends JPanel implements ActionListener {
 				neuesSpiel();
 			}
 		}
+		if ((schlange.getX_Koordinate(0) == mauer.getX_Koordinate())
+				&& (schlange.getY_Koordinate(0) == mauer.getY_Koordinate())) {
+			alive = false;
+			System.out.println("mauer");
+			JOptionPane.showMessageDialog(Spiel.this, label, "Game Over", JOptionPane.INFORMATION_MESSAGE);
+			neuesSpiel();
+		}
 	}
+		
+	
 	
 	public void levelChecken() {
 		if (level_Counter++ % level_Teiler == 0) {
@@ -142,6 +183,7 @@ public class Spiel extends JPanel implements ActionListener {
 			head_1 = ImageIO.read(Spiel.class.getClassLoader().getResourceAsStream("img/kopf_1.png"));
 			head_2 = ImageIO.read(Spiel.class.getClassLoader().getResourceAsStream("img/kopf_2.png"));
 			head_3 = ImageIO.read(Spiel.class.getClassLoader().getResourceAsStream("img/kopf_3.png"));
+			wall = ImageIO.read(Spiel.class.getClassLoader().getResourceAsStream("img/wall.png"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -234,6 +276,8 @@ public class Spiel extends JPanel implements ActionListener {
 				g.setColor(Color.BLUE);
 				g.fillOval(schlange.getX_Koordinate(i), schlange.getY_Koordinate(i), 20, 20);
 			}
+			
+			g.drawImage(wall, mauer.getX_Koordinate(), mauer.getY_Koordinate(), this);
 
 			g.drawImage(apple, apfel.getX_Koordinate(), apfel.getY_Koordinate(), this);
 
