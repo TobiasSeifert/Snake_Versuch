@@ -26,8 +26,9 @@ import objekte.Schlange;
 
 @SuppressWarnings("serial")
 public class Spiel extends JPanel implements ActionListener {
-	private int level_Counter = 0;
-	private int level_Teiler = 15;
+	
+	private int level_Counter = 1;
+	private int level_Teiler = 20;
 	private int level_Teiler_Counter = 1;
 
 	private KeyListener pfeiltasten = new ButListener();
@@ -60,16 +61,13 @@ public class Spiel extends JPanel implements ActionListener {
 		addImages();
 	}
 
-	public void snake_move() {
-		schlange.bestimmeSchlange();
-		apfelChecken();
-		gameOverChecken();
-		levelChecken();
-	}
-
+	//Methoden
 	public void neuesSpiel() {
 		schlange = new Schlange(2,2); // 2 = Körper 2 lang, 2 = Richtung nach links
 		score = 0;
+		level_Counter = 1;
+		level_Teiler = 20;
+		level_Teiler_Counter = 1;
 		erschaffeApfel();
 		erschaffeMauer();
 	}
@@ -80,6 +78,13 @@ public class Spiel extends JPanel implements ActionListener {
 		alive = true;
 		t.start();
 	}
+	
+	public void snake_move() {
+		schlange.bestimmeSchlange();
+		apfelChecken();
+		gameOverChecken();
+		levelChecken();
+	}
 
 	public void apfelChecken() {
 		if (schlange.getX_Koordinate(0) == apfel.getX_Koordinate() && schlange.getY_Koordinate(0) == apfel.getY_Koordinate()) {
@@ -89,6 +94,73 @@ public class Spiel extends JPanel implements ActionListener {
 		}
 	}
 	
+	public void levelChecken() {
+		if (level_Counter++ % level_Teiler == 0) {
+			schlange.verlängerSchlange();
+			if (level_Teiler_Counter++ % 10 == 0) {
+				level_Teiler--;
+			}
+		}
+		System.out.println(level_Counter + " " + level_Teiler + " " + level_Teiler_Counter);
+	}
+	
+	public void gameOverChecken() {
+		JLabel label = new JLabel("Dein Score beträgt " + score + "!");
+		label.setFont(new Font("Times New Roman", Font.ITALIC + Font.BOLD, 16));
+		
+		gameOverWand(label);
+		
+		gameOverEnde(label);
+		
+		gameOverSchlange(label);
+		
+		gameOverMauer(label);
+
+	}
+	
+	public void gameOverWand(JLabel label) {
+		if (schlange.getX_Koordinate(0) < 0 || schlange.getX_Koordinate(0) > 380 || schlange.getY_Koordinate(0) < 0
+				|| schlange.getY_Koordinate(0) > 380) {
+			alive = false;
+			System.out.println("Wand");
+			JOptionPane.showMessageDialog(Spiel.this, label, "Game Over", JOptionPane.INFORMATION_MESSAGE);
+			neuesSpiel();
+
+		}
+	}
+
+	public void gameOverEnde(JLabel label) {
+		if (schlange.getLänge_Körper() >= 398) {
+			alive = false;
+			System.out.println("Ende");
+			JOptionPane.showMessageDialog(Spiel.this, label, "Spiel Ende", JOptionPane.INFORMATION_MESSAGE);
+			neuesSpiel();
+
+		}
+	}
+
+	public void gameOverSchlange(JLabel label) {
+		for (int i = 1; i <= schlange.getLänge_Körper(); i++) {
+			if ((schlange.getX_Koordinate(0) == schlange.getX_Koordinate(i))
+					&& (schlange.getY_Koordinate(0) == schlange.getY_Koordinate(i))) {
+				alive = false;
+				System.out.println("schlange");
+				JOptionPane.showMessageDialog(Spiel.this, label, "Game Over", JOptionPane.INFORMATION_MESSAGE);
+				neuesSpiel();
+			}
+		}
+	}
+
+	public void gameOverMauer(JLabel label) {
+		if ((schlange.getX_Koordinate(0) == mauer.getX_Koordinate())
+				&& (schlange.getY_Koordinate(0) == mauer.getY_Koordinate())) {
+			alive = false;
+			System.out.println("mauer");
+			JOptionPane.showMessageDialog(Spiel.this, label, "Game Over", JOptionPane.INFORMATION_MESSAGE);
+			neuesSpiel();
+		}
+	}
+
 	public void erschaffeApfel() {
 		Random random = new Random();
 		boolean check = true;
@@ -129,63 +201,17 @@ public class Spiel extends JPanel implements ActionListener {
 		}
 		return false;
 	}
-
-	public void gameOverChecken() {
-		JLabel label = new JLabel("Dein Score beträgt " + score + "!");
-		label.setFont(new Font("Times New Roman", Font.ITALIC + Font.BOLD, 16));
-		if (schlange.getX_Koordinate(0) < 0 || schlange.getX_Koordinate(0) > 380 || schlange.getY_Koordinate(0) < 0
-				|| schlange.getY_Koordinate(0) > 380) {
-			alive = false;
-			System.out.println("Wand");
-			JOptionPane.showMessageDialog(Spiel.this, label, "Game Over", JOptionPane.INFORMATION_MESSAGE);
-			neuesSpiel();
-
-		}
-
-		for (int i = 1; i <= schlange.getLänge_Körper(); i++) {
-			if ((schlange.getX_Koordinate(0) == schlange.getX_Koordinate(i))
-					&& (schlange.getY_Koordinate(0) == schlange.getY_Koordinate(i))) {
-				alive = false;
-				System.out.println("schlange");
-				JOptionPane.showMessageDialog(Spiel.this, label, "Game Over", JOptionPane.INFORMATION_MESSAGE);
-				neuesSpiel();
-			}
-		}
-		if ((schlange.getX_Koordinate(0) == mauer.getX_Koordinate())
-				&& (schlange.getY_Koordinate(0) == mauer.getY_Koordinate())) {
-			alive = false;
-			System.out.println("mauer");
-			JOptionPane.showMessageDialog(Spiel.this, label, "Game Over", JOptionPane.INFORMATION_MESSAGE);
-			neuesSpiel();
-		}
-	}
 		
-	
-	
-	public void levelChecken() {
-		if (level_Counter++ % level_Teiler == 0) {
-			schlange.verlängerSchlange();
-			if (level_Teiler_Counter++ % 10 == 0) {
-				level_Teiler--;
-			}
-		}
-	}
-	
 	public void esseApfel() {
 		schlange.verlängerSchlange();
 		score += 100;
 	}
-
-	public void addImages() {
-		try {
-			apple = ImageIO.read(Spiel.class.getClassLoader().getResourceAsStream("img/apple.png"));
-			head_0 = ImageIO.read(Spiel.class.getClassLoader().getResourceAsStream("img/kopf_0.png"));
-			head_1 = ImageIO.read(Spiel.class.getClassLoader().getResourceAsStream("img/kopf_1.png"));
-			head_2 = ImageIO.read(Spiel.class.getClassLoader().getResourceAsStream("img/kopf_2.png"));
-			head_3 = ImageIO.read(Spiel.class.getClassLoader().getResourceAsStream("img/kopf_3.png"));
-			wall = ImageIO.read(Spiel.class.getClassLoader().getResourceAsStream("img/wall.png"));
-		} catch (IOException e) {
-			e.printStackTrace();
+	
+	public void aktualisiereZeit() {
+		seconds = (int) ((System.currentTimeMillis() / 1000) - zeitAnfang);
+		if (seconds > 60) {
+			zeitAnfang += 60;
+			minutes++;
 		}
 	}
 
@@ -194,11 +220,7 @@ public class Spiel extends JPanel implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		if (alive) {
 			snake_move();
-			seconds = (int) ((System.currentTimeMillis() / 1000) - zeitAnfang);
-			if (seconds > 60) {
-				zeitAnfang += 60;
-				minutes++;
-			}
+			aktualisiereZeit();
 		}
 		addKeyListener(pfeiltasten);
 		repaint();
@@ -237,7 +259,21 @@ public class Spiel extends JPanel implements ActionListener {
 		}
 	}
 
-	// zeichnen der Schlange
+	// zeichnen der Spieloberfläche
+	
+	public void addImages() {
+		try {
+			apple = ImageIO.read(Spiel.class.getClassLoader().getResourceAsStream("img/apple.png"));
+			head_0 = ImageIO.read(Spiel.class.getClassLoader().getResourceAsStream("img/kopf_0.png"));
+			head_1 = ImageIO.read(Spiel.class.getClassLoader().getResourceAsStream("img/kopf_1.png"));
+			head_2 = ImageIO.read(Spiel.class.getClassLoader().getResourceAsStream("img/kopf_2.png"));
+			head_3 = ImageIO.read(Spiel.class.getClassLoader().getResourceAsStream("img/kopf_3.png"));
+			wall = ImageIO.read(Spiel.class.getClassLoader().getResourceAsStream("img/wall.png"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
 
